@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 import 'package:file_picker/file_picker.dart';
@@ -11,8 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 //import 'dart:async';
-import 'dart:io';
-import 'package:flutter/rendering.dart';
 
 //import 'modules/test_widget.dart';
 
@@ -24,7 +24,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   windowManager.setTitle("Random Text Reader");
-  windowManager.setMinimumSize(Size(700, 300));
+  windowManager.setMinimumSize(Size(300, 300));
   windowManager.setSize(Size(1300, 800));
 
   runApp(const MainApp());
@@ -64,8 +64,7 @@ class MyAppState extends ChangeNotifier {
     //   initFiles();
     // });
 
-    loadSettings();
-    initFiles();
+    init();
 
     textData.fileName = 'empty';
     textData.fileContent = 'empty';
@@ -80,12 +79,18 @@ class MyAppState extends ChangeNotifier {
   //   return directory.path;
   // }
 
-  loadSettings() async {
+  init() async {
+    await loadSettings();
+    await initFiles();
+  }
+
+  Future<void> loadSettings() async {
     var prefs = await SharedPreferences.getInstance();
 
-    if (prefs.containsKey("bookDirectory")) {
-      userSettings.bookDirectory = prefs.getString("bookDirectory")!;
-    }
+    print("Default path:${userSettings.bookDirectory}");
+    // if (prefs.containsKey("bookDirectory")) {
+    //   userSettings.bookDirectory = prefs.getString("bookDirectory")!;
+    // }
 
     if (prefs.containsKey("selectedIndex")) {
       userSettings.selectedIndex = prefs.getInt("selectedIndex")!;
@@ -97,6 +102,8 @@ class MyAppState extends ChangeNotifier {
     if (prefs.containsKey("rangeModifier")) {
       userSettings.rangeModifier = prefs.getInt("rangeModifier")!;
     }
+
+    print("selectedIndex(loadSettings):${userSettings.selectedIndex}");
   }
 
   Future<String> saveSettings() async {
@@ -114,17 +121,17 @@ class MyAppState extends ChangeNotifier {
     final dir = Directory(userSettings.bookDirectory);
     fileNames = [];
     await for (var entity in dir.list(recursive: false, followLinks: false)) {
-      print(p.extension(entity.path));
+      //print(p.canonicalize(entity.path));
       //print(p.basenameWithoutExtension(entity.path));
       if (p.extension(entity.path) == '.txt') {
         fileNames.add(entity.path);
       }
-
-      if (userSettings.selectedIndex >= fileNames.length - 1) {
-        userSettings.selectedIndex = fileNames.length - 1;
-      }
-      notifyListeners();
     }
+    if (userSettings.selectedIndex >= fileNames.length - 1) {
+      userSettings.selectedIndex = fileNames.length - 1;
+    }
+
+    notifyListeners();
   }
 
   pickDir() async {
@@ -255,12 +262,16 @@ class MainApp extends StatelessWidget {
 }
 
 class LeftPane extends StatelessWidget {
+  final double marginRight;
+  LeftPane({this.marginRight = 5.0});
+
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     return Container(
-      margin: EdgeInsets.only(top: 30, bottom: 30, left: 30, right: 5),
-      padding: EdgeInsets.all(5.0),
+      margin:
+          EdgeInsets.only(top: 30, bottom: 30, left: 30, right: marginRight),
+      padding: EdgeInsets.only(top: 5, bottom: 5, left: 5, right: 5),
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 63, 156, 192),
         border: Border.all(),
@@ -281,7 +292,8 @@ class LeftPane extends StatelessWidget {
               children: [
                 for (final (index, f) in appState.fileNames.indexed)
                   ListTile(
-                    title: Text('$index ${p.basenameWithoutExtension(f)}',
+                    title: Text(
+                        '$index ${Uri.decodeFull(p.basenameWithoutExtension(f))}',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -312,6 +324,9 @@ class LeftPane extends StatelessWidget {
 }
 
 class RightPane extends StatefulWidget {
+  final double marginLeft;
+  RightPane({this.marginLeft = 5.0});
+
   @override
   State<RightPane> createState() => _RightPaneState();
 }
@@ -334,7 +349,8 @@ class _RightPaneState extends State<RightPane> {
       widthFactor: 1,
       heightFactor: 1,
       child: Container(
-        margin: EdgeInsets.only(top: 30, bottom: 30, right: 30),
+        margin: EdgeInsets.only(
+            left: widget.marginLeft, top: 30, bottom: 30, right: 30),
         padding: EdgeInsets.all(10.0),
         decoration: BoxDecoration(
           color: Colors.white70,
@@ -441,6 +457,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with WindowListener {
   var appState;
+  final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
+
   MultiSplitViewController _splitController = MultiSplitViewController(
       areas: [Area(minimalWeight: .25, weight: .25), Area(minimalWeight: .25)]);
   @override
@@ -455,10 +473,10 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
     super.dispose();
   }
 
-  @override
-  void onWindowEvent(String eventName) {
-    print('[WindowManager] onWindowEvent: $eventName');
-  }
+  // @override
+  // void onWindowEvent(String eventName) {
+  //   print('[WindowManager] onWindowEvent: $eventName');
+  // }
 
   @override
   void onWindowClose() async {
@@ -469,26 +487,44 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
   @override
   Widget build(BuildContext context) {
     appState = context.watch<MyAppState>();
+    var screenWidth = MediaQuery.of(context).size.width;
+    // openDrawer() {
+    //   Scaffold.of(context).openDrawer();
+    //}
 
-    return Scaffold(
-        body: MultiSplitView(
-      //initialAreas: [Area(weight: 0.25)],
-      controller: _splitController,
-      children: [LeftPane(), RightPane()],
-    )
-        // body: Row(
-        //   children: [
-        //     Expanded(
-        //       flex: 3,
-        //       child: LeftPane(),
-        //     ),
-        //     Expanded(
-        //       flex: 7,
-        //       child: RightPane(),
-        //     ),
-        //   ],
-        // ),
-        );
+    if (screenWidth > 600) {
+      return Scaffold(
+          body: MultiSplitView(
+        //initialAreas: [Area(weight: 0.25)],
+        controller: _splitController,
+        children: [LeftPane(), RightPane()],
+      ));
+    } else {
+      return Scaffold(
+        key: _key,
+        body: Stack(
+          children: [
+            RightPane(
+              marginLeft: 30,
+            ),
+            Positioned(
+              top: 35,
+              left: 15,
+              child: ElevatedButton(
+                  onPressed: () {
+                    _key.currentState!.openDrawer();
+                  },
+                  child: Text('Files')),
+            ),
+          ],
+        ),
+        drawer: Drawer(
+          child: LeftPane(
+            marginRight: 30,
+          ),
+        ),
+      );
+    }
   }
 }
 
