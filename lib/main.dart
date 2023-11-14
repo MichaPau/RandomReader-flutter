@@ -1,19 +1,21 @@
-import 'dart:math';
-import 'dart:io';
+//import 'dart:math';
+//import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
-import 'package:file_picker/file_picker.dart';
+//import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:random_reader/modules/test_notification.dart';
+//import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 //import 'dart:async';
 
+import 'state/app_state.dart';
 //import 'modules/test_widget.dart';
 
 void showLayoutGuidelines() {
@@ -34,197 +36,174 @@ class TextData {
   String fileName = "empty";
   String fileContent = "empty";
   String resultContent = 'empty';
-  //int resultLength = 0;
   int startIndex = 0;
   int endIndex = 0;
 }
 
-class UserSettings {
-  String bookDirectory = p.join(Directory.current.path, 'assets', 'books');
-  int selectedIndex = 0;
+// class UserSettings {
+//   String bookDirectory = p.join(Directory.current.path, 'assets', 'books');
+//   int selectedIndex = 0;
 
-  int resultLength = 250;
-  int rangeModifier = 100;
-}
+//   int resultLength = 250;
+//   int rangeModifier = 100;
+// }
 
-class MyAppState extends ChangeNotifier {
-  var info = "Info string";
-  //var bookDirPath = p.join(Directory.current.path, 'assets', 'books');
-  var fileNames = <String>[];
+// class MyAppState extends ChangeNotifier {
+//   var info = "Info string";
+//   var fileNames = <String>[];
 
-  //int selectedFileIndex = 0;
-  //int maxRange = 100;
+//   var textData = TextData();
+//   var userSettings = UserSettings();
 
-  var textData = TextData();
-  var userSettings = UserSettings();
+//   MyAppState() {
 
-  MyAppState() {
-    // _localPath.then((value) {
-    //   dir = Directory(value);
-    //   initFiles();
-    // });
+//     init();
 
-    init();
+//     textData.fileName = 'empty';
+//     textData.fileContent = 'empty';
+//     textData.resultContent = 'empty';
+//     textData.startIndex = 0;
+//     textData.endIndex = 0;
+//   }
 
-    textData.fileName = 'empty';
-    textData.fileContent = 'empty';
-    textData.resultContent = 'empty';
-    //textData.resultLength = 250;
-    textData.startIndex = 0;
-    textData.endIndex = 0;
-  }
-  // Future<String> get _localPath async {
-  //   final directory = Directory(bookDirPath);
+//   init() async {
+//     await loadSettings();
+//     await initFiles();
+//   }
 
-  //   return directory.path;
-  // }
+//   Future<void> loadSettings() async {
+//     var prefs = await SharedPreferences.getInstance();
 
-  init() async {
-    await loadSettings();
-    await initFiles();
-  }
+//     print("Default path:${userSettings.bookDirectory}");
+//     // if (prefs.containsKey("bookDirectory")) {
+//     //   userSettings.bookDirectory = prefs.getString("bookDirectory")!;
+//     // }
 
-  Future<void> loadSettings() async {
-    var prefs = await SharedPreferences.getInstance();
+//     if (prefs.containsKey("selectedIndex")) {
+//       userSettings.selectedIndex = prefs.getInt("selectedIndex")!;
+//     }
 
-    print("Default path:${userSettings.bookDirectory}");
-    // if (prefs.containsKey("bookDirectory")) {
-    //   userSettings.bookDirectory = prefs.getString("bookDirectory")!;
-    // }
+//     if (prefs.containsKey("resultLength")) {
+//       userSettings.resultLength = prefs.getInt("resultLength")!;
+//     }
+//     if (prefs.containsKey("rangeModifier")) {
+//       userSettings.rangeModifier = prefs.getInt("rangeModifier")!;
+//     }
 
-    if (prefs.containsKey("selectedIndex")) {
-      userSettings.selectedIndex = prefs.getInt("selectedIndex")!;
-    }
+//     print("selectedIndex(loadSettings):${userSettings.selectedIndex}");
+//   }
 
-    if (prefs.containsKey("resultLength")) {
-      userSettings.resultLength = prefs.getInt("resultLength")!;
-    }
-    if (prefs.containsKey("rangeModifier")) {
-      userSettings.rangeModifier = prefs.getInt("rangeModifier")!;
-    }
+//   Future<String> saveSettings() async {
+//     var prefs = await SharedPreferences.getInstance();
 
-    print("selectedIndex(loadSettings):${userSettings.selectedIndex}");
-  }
+//     prefs.setString("bookDirectory", userSettings.bookDirectory);
+//     prefs.setInt("selectedIndex", userSettings.selectedIndex);
+//     prefs.setInt("rangeModifier", userSettings.rangeModifier);
+//     prefs.setInt("resultLength", userSettings.resultLength);
 
-  Future<String> saveSettings() async {
-    var prefs = await SharedPreferences.getInstance();
+//     return "Saved";
+//   }
 
-    prefs.setString("bookDirectory", userSettings.bookDirectory);
-    prefs.setInt("selectedIndex", userSettings.selectedIndex);
-    prefs.setInt("rangeModifier", userSettings.rangeModifier);
-    prefs.setInt("resultLength", userSettings.resultLength);
+//   initFiles() async {
+//     final dir = Directory(userSettings.bookDirectory);
+//     fileNames = [];
+//     await for (var entity in dir.list(recursive: false, followLinks: false)) {
 
-    return "Saved";
-  }
+//       if (p.extension(entity.path) == '.txt') {
+//         fileNames.add(entity.path);
+//       }
+//     }
+//     if (userSettings.selectedIndex >= fileNames.length - 1) {
+//       userSettings.selectedIndex = fileNames.length - 1;
+//     }
 
-  initFiles() async {
-    final dir = Directory(userSettings.bookDirectory);
-    fileNames = [];
-    await for (var entity in dir.list(recursive: false, followLinks: false)) {
-      //print(p.canonicalize(entity.path));
-      //print(p.basenameWithoutExtension(entity.path));
-      if (p.extension(entity.path) == '.txt') {
-        fileNames.add(entity.path);
-      }
-    }
-    if (userSettings.selectedIndex >= fileNames.length - 1) {
-      userSettings.selectedIndex = fileNames.length - 1;
-    }
+//     notifyListeners();
+//   }
 
-    notifyListeners();
-  }
+//   pickDir() async {
+//     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
-  pickDir() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+//     if (selectedDirectory == null) {
+//     } else {
+//       print(selectedDirectory);
+//       userSettings.bookDirectory = selectedDirectory.toString();
+//       //saveSettings();
+//       initFiles();
+//     }
+//   }
 
-    if (selectedDirectory == null) {
-    } else {
-      print(selectedDirectory);
-      userSettings.bookDirectory = selectedDirectory.toString();
-      //saveSettings();
-      initFiles();
-    }
-  }
+//   changeSelection(value) {
+//     print("changeSelection: $value");
+//     userSettings.selectedIndex = value;
+//     //saveSettings();
+//     notifyListeners();
+//   }
 
-  changeSelection(value) {
-    print("changeSelection: $value");
-    //selectedFileIndex = value;
-    userSettings.selectedIndex = value;
-    //saveSettings();
-    notifyListeners();
-  }
+//   debugInfo() async {
+//     print('button pressed!');
+//   }
 
-  debugInfo() async {
-    print('button pressed!');
-    //print(dir);
+//   setMaxRange(value) {
 
-    // _localPath.then((value) {
-    //   print(value);
-    // });
-  }
+//     userSettings.rangeModifier = value;
+//     //saveSettings();
+//     notifyListeners();
+//   }
 
-  setMaxRange(value) {
-    //maxRange = value;
-    userSettings.rangeModifier = value;
-    //saveSettings();
-    notifyListeners();
-  }
+//   updateSettings(resultLength) {
 
-  updateSettings(resultLength) {
-    //textData.resultLength = resultLength;
+//     userSettings.resultLength = resultLength;
+//     //saveSettings();
+//     notifyListeners();
+//   }
 
-    userSettings.resultLength = resultLength;
-    //saveSettings();
-    notifyListeners();
-  }
+//   readFile() {
 
-  readFile() {
-    //var file = fileNames[selectedFileIndex];
-    var file = fileNames[userSettings.selectedIndex];
-    print(file);
+//     var file = fileNames[userSettings.selectedIndex];
+//     print(file);
 
-    try {
-      File(file).readAsString().then((String contents) {
-        textData.fileContent = contents;
+//     try {
+//       File(file).readAsString().then((String contents) {
+//         textData.fileContent = contents;
 
-        if (textData.fileContent.length <= userSettings.resultLength) {
-          userSettings.resultLength = contents.length - 5;
-        }
-        textData.startIndex = Random()
-            .nextInt(textData.fileContent.length - userSettings.resultLength);
-        textData.endIndex = textData.startIndex + userSettings.resultLength;
-        textData.resultContent =
-            contents.substring(textData.startIndex, textData.endIndex);
+//         if (textData.fileContent.length <= userSettings.resultLength) {
+//           userSettings.resultLength = contents.length - 5;
+//         }
+//         textData.startIndex = Random()
+//             .nextInt(textData.fileContent.length - userSettings.resultLength);
+//         textData.endIndex = textData.startIndex + userSettings.resultLength;
+//         textData.resultContent =
+//             contents.substring(textData.startIndex, textData.endIndex);
 
-        notifyListeners();
-      }).onError((error, stackTrace) {
-        print(error);
-        textData.resultContent = error.toString();
-        notifyListeners();
-      });
-    } catch (e) {
-      print(e);
-      textData.resultContent = e.toString();
-    }
-  }
+//         notifyListeners();
+//       }).onError((error, stackTrace) {
+//         print(error);
+//         textData.resultContent = error.toString();
+//         notifyListeners();
+//       });
+//     } catch (e) {
+//       print(e);
+//       textData.resultContent = e.toString();
+//     }
+//   }
 
-  updateRange(int startMod, int endMod) {
-    int newStartIndex = textData.startIndex + startMod;
-    if (newStartIndex < 0) {
-      newStartIndex = 0;
-    }
+//   updateRange(int startMod, int endMod) {
+//     int newStartIndex = textData.startIndex + startMod;
+//     if (newStartIndex < 0) {
+//       newStartIndex = 0;
+//     }
 
-    int newEndIndex = textData.endIndex + endMod;
+//     int newEndIndex = textData.endIndex + endMod;
 
-    if (newEndIndex > textData.fileContent.length - 1) {
-      newEndIndex = textData.fileContent.length - 1;
-    }
-    textData.resultContent =
-        textData.fileContent.substring(newStartIndex, newEndIndex);
+//     if (newEndIndex > textData.fileContent.length - 1) {
+//       newEndIndex = textData.fileContent.length - 1;
+//     }
+//     textData.resultContent =
+//         textData.fileContent.substring(newStartIndex, newEndIndex);
 
-    notifyListeners();
-  }
-}
+//     notifyListeners();
+//   }
+// }
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -263,14 +242,15 @@ class MainApp extends StatelessWidget {
 
 class LeftPane extends StatelessWidget {
   final double marginRight;
-  LeftPane({this.marginRight = 5.0});
+  final double margins;
+  LeftPane({this.marginRight = 5.0, this.margins = 30.0});
 
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     return Container(
-      margin:
-          EdgeInsets.only(top: 30, bottom: 30, left: 30, right: marginRight),
+      margin: EdgeInsets.only(
+          top: margins, bottom: margins, left: margins, right: marginRight),
       padding: EdgeInsets.only(top: 5, bottom: 5, left: 5, right: 5),
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 63, 156, 192),
@@ -336,7 +316,7 @@ class _RightPaneState extends State<RightPane> {
   double currentEndSliderValue = 0;
   double maxSliderValue = 100;
 
-  var textFieldHeight;
+  double? textFieldHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -441,6 +421,18 @@ class _RightPaneState extends State<RightPane> {
                     child: Text('Get Text'),
                   ),
                 ),
+                // How to use Notifications from child widgets
+                // SizedBox(
+                //   height: 5,
+                // ),
+                // NotificationListener(
+                //   child: NotificationWidget(),
+                //   onNotification: (DemoNotification n) {
+                //     print('Received notification');
+                //     print(n.value);
+                //     return true;
+                //   },
+                // )
               ],
             ),
           ),
@@ -456,7 +448,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WindowListener {
-  var appState;
+  MyAppState? appState;
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
 
   MultiSplitViewController _splitController = MultiSplitViewController(
@@ -481,7 +473,9 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
   @override
   void onWindowClose() async {
     print("onWindowsClose");
-    await appState.saveSettings().then((res) => print("Settings saved"));
+    if (appState != null) {
+      await appState!.saveSettings().then((res) => print("Settings saved"));
+    }
   }
 
   @override
@@ -509,7 +503,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
             ),
             Positioned(
               top: 35,
-              left: 15,
+              left: 35,
               child: ElevatedButton(
                   onPressed: () {
                     _key.currentState!.openDrawer();
@@ -519,9 +513,25 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
           ],
         ),
         drawer: Drawer(
-          child: LeftPane(
-            marginRight: 30,
-          ),
+          shape: Border.all(color: Colors.black),
+          child: Stack(fit: StackFit.expand, children: [
+            LeftPane(
+              margins: 5,
+              marginRight: 5,
+            ),
+            Positioned.fill(
+                child: Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                  onPressed: () {
+                    _key.currentState!.closeDrawer();
+                  },
+                  icon: Icon(
+                    Icons.pets,
+                    color: Colors.black,
+                  )),
+            ))
+          ]),
         ),
       );
     }
