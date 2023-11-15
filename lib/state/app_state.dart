@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:io';
-import 'dart:convert';
+//import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
+//import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
+
 import 'package:path/path.dart' as p;
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +21,10 @@ class TextData {
 }
 
 class UserSettings {
-  String bookDirectory = p.join(Directory.current.path, 'assets', 'books');
+  String bookDirectory = kReleaseMode
+      ? p.join(
+          Directory.current.path, 'data', 'flutter_assets', 'assets', 'books')
+      : p.join(Directory.current.path, 'assets', 'books');
   int selectedIndex = 0;
 
   int resultLength = 250;
@@ -61,15 +66,16 @@ class MyAppState extends ChangeNotifier {
   init() async {
     await loadSettings();
     await initFiles();
+    readFile();
   }
 
   Future<void> loadSettings() async {
     var prefs = await SharedPreferences.getInstance();
 
     print("Default path:${userSettings.bookDirectory}");
-    // if (prefs.containsKey("bookDirectory")) {
-    //   userSettings.bookDirectory = prefs.getString("bookDirectory")!;
-    // }
+    if (prefs.containsKey("bookDirectory")) {
+      userSettings.bookDirectory = prefs.getString("bookDirectory")!;
+    }
 
     if (prefs.containsKey("selectedIndex")) {
       userSettings.selectedIndex = prefs.getInt("selectedIndex")!;
@@ -114,12 +120,16 @@ class MyAppState extends ChangeNotifier {
   }
 
   pickDir() async {
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: "Select a folder.",
+        initialDirectory: userSettings.bookDirectory);
 
     if (selectedDirectory == null) {
     } else {
       print(selectedDirectory);
       userSettings.bookDirectory = selectedDirectory.toString();
+      userSettings.selectedIndex = 0;
+      readFile();
       //saveSettings();
       initFiles();
     }
@@ -129,6 +139,7 @@ class MyAppState extends ChangeNotifier {
     print("changeSelection: $value");
     //selectedFileIndex = value;
     userSettings.selectedIndex = value;
+    readFile();
     //saveSettings();
     notifyListeners();
   }
@@ -160,40 +171,44 @@ class MyAppState extends ChangeNotifier {
   readFile() {
     //var file = fileNames[selectedFileIndex];
     var file = fileNames[userSettings.selectedIndex];
-    print(file);
+    // print(file);
 
-    try {
-      // Stream<List<int>> stream = File(file).openRead();
-      // StringBuffer buffer = StringBuffer();
+    //try {
+    File(file).readAsString(encoding: utf8).then((String contents) {
+      textData.fileContent = contents;
 
-      // stream.transform(utf8.decoder).transform(LineSplitter()).listen((line) {
-      //   buffer.writeln(line);
-      // }, onDone: () => print(buffer.toString()), onError: (e) => print(e));
-
-      File(file).readAsString().then((String contents) {
-        //var utf8content = utf8.decode(contents);
-        //textData.fileContent = utf8content;
+      if (textData.fileContent.length <= userSettings.resultLength) {
+        userSettings.resultLength = contents.length - 1;
+      }
+    }).onError((error, stackTrace) {
+      print("onError: $error");
+      print("try ascii");
+      File(file).readAsString(encoding: Latin1Codec()).then((String contents) {
         textData.fileContent = contents;
 
         if (textData.fileContent.length <= userSettings.resultLength) {
-          userSettings.resultLength = contents.length - 5;
+          userSettings.resultLength = contents.length - 1;
         }
-        textData.startIndex = Random()
-            .nextInt(textData.fileContent.length - userSettings.resultLength);
-        textData.endIndex = textData.startIndex + userSettings.resultLength;
-        textData.resultContent =
-            contents.substring(textData.startIndex, textData.endIndex);
-
-        notifyListeners();
       }).onError((error, stackTrace) {
-        print(error);
+        print("onError2: $error");
         textData.resultContent = error.toString();
         notifyListeners();
       });
-    } catch (e) {
-      print(e);
-      textData.resultContent = e.toString();
-    }
+    });
+    // } catch (e) {
+    //   print("catch: $e");
+    //   textData.resultContent = e.toString();
+    // }
+  }
+
+  randomParagraph() {
+    textData.startIndex = Random()
+        .nextInt(textData.fileContent.length - userSettings.resultLength);
+    textData.endIndex = textData.startIndex + userSettings.resultLength;
+    textData.resultContent =
+        textData.fileContent.substring(textData.startIndex, textData.endIndex);
+
+    notifyListeners();
   }
 
   updateRange(int startMod, int endMod) {

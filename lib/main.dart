@@ -6,14 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
-//import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:multi_split_view/multi_split_view.dart';
-//import 'package:random_reader/modules/test_notification.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
-import 'package:window_manager/window_manager.dart';
 
-//import 'dart:async';
+import 'package:window_manager/window_manager.dart';
 
 import 'state/app_state.dart';
 //import 'modules/test_widget.dart';
@@ -31,179 +27,6 @@ void main() async {
 
   runApp(const MainApp());
 }
-
-class TextData {
-  String fileName = "empty";
-  String fileContent = "empty";
-  String resultContent = 'empty';
-  int startIndex = 0;
-  int endIndex = 0;
-}
-
-// class UserSettings {
-//   String bookDirectory = p.join(Directory.current.path, 'assets', 'books');
-//   int selectedIndex = 0;
-
-//   int resultLength = 250;
-//   int rangeModifier = 100;
-// }
-
-// class MyAppState extends ChangeNotifier {
-//   var info = "Info string";
-//   var fileNames = <String>[];
-
-//   var textData = TextData();
-//   var userSettings = UserSettings();
-
-//   MyAppState() {
-
-//     init();
-
-//     textData.fileName = 'empty';
-//     textData.fileContent = 'empty';
-//     textData.resultContent = 'empty';
-//     textData.startIndex = 0;
-//     textData.endIndex = 0;
-//   }
-
-//   init() async {
-//     await loadSettings();
-//     await initFiles();
-//   }
-
-//   Future<void> loadSettings() async {
-//     var prefs = await SharedPreferences.getInstance();
-
-//     print("Default path:${userSettings.bookDirectory}");
-//     // if (prefs.containsKey("bookDirectory")) {
-//     //   userSettings.bookDirectory = prefs.getString("bookDirectory")!;
-//     // }
-
-//     if (prefs.containsKey("selectedIndex")) {
-//       userSettings.selectedIndex = prefs.getInt("selectedIndex")!;
-//     }
-
-//     if (prefs.containsKey("resultLength")) {
-//       userSettings.resultLength = prefs.getInt("resultLength")!;
-//     }
-//     if (prefs.containsKey("rangeModifier")) {
-//       userSettings.rangeModifier = prefs.getInt("rangeModifier")!;
-//     }
-
-//     print("selectedIndex(loadSettings):${userSettings.selectedIndex}");
-//   }
-
-//   Future<String> saveSettings() async {
-//     var prefs = await SharedPreferences.getInstance();
-
-//     prefs.setString("bookDirectory", userSettings.bookDirectory);
-//     prefs.setInt("selectedIndex", userSettings.selectedIndex);
-//     prefs.setInt("rangeModifier", userSettings.rangeModifier);
-//     prefs.setInt("resultLength", userSettings.resultLength);
-
-//     return "Saved";
-//   }
-
-//   initFiles() async {
-//     final dir = Directory(userSettings.bookDirectory);
-//     fileNames = [];
-//     await for (var entity in dir.list(recursive: false, followLinks: false)) {
-
-//       if (p.extension(entity.path) == '.txt') {
-//         fileNames.add(entity.path);
-//       }
-//     }
-//     if (userSettings.selectedIndex >= fileNames.length - 1) {
-//       userSettings.selectedIndex = fileNames.length - 1;
-//     }
-
-//     notifyListeners();
-//   }
-
-//   pickDir() async {
-//     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-
-//     if (selectedDirectory == null) {
-//     } else {
-//       print(selectedDirectory);
-//       userSettings.bookDirectory = selectedDirectory.toString();
-//       //saveSettings();
-//       initFiles();
-//     }
-//   }
-
-//   changeSelection(value) {
-//     print("changeSelection: $value");
-//     userSettings.selectedIndex = value;
-//     //saveSettings();
-//     notifyListeners();
-//   }
-
-//   debugInfo() async {
-//     print('button pressed!');
-//   }
-
-//   setMaxRange(value) {
-
-//     userSettings.rangeModifier = value;
-//     //saveSettings();
-//     notifyListeners();
-//   }
-
-//   updateSettings(resultLength) {
-
-//     userSettings.resultLength = resultLength;
-//     //saveSettings();
-//     notifyListeners();
-//   }
-
-//   readFile() {
-
-//     var file = fileNames[userSettings.selectedIndex];
-//     print(file);
-
-//     try {
-//       File(file).readAsString().then((String contents) {
-//         textData.fileContent = contents;
-
-//         if (textData.fileContent.length <= userSettings.resultLength) {
-//           userSettings.resultLength = contents.length - 5;
-//         }
-//         textData.startIndex = Random()
-//             .nextInt(textData.fileContent.length - userSettings.resultLength);
-//         textData.endIndex = textData.startIndex + userSettings.resultLength;
-//         textData.resultContent =
-//             contents.substring(textData.startIndex, textData.endIndex);
-
-//         notifyListeners();
-//       }).onError((error, stackTrace) {
-//         print(error);
-//         textData.resultContent = error.toString();
-//         notifyListeners();
-//       });
-//     } catch (e) {
-//       print(e);
-//       textData.resultContent = e.toString();
-//     }
-//   }
-
-//   updateRange(int startMod, int endMod) {
-//     int newStartIndex = textData.startIndex + startMod;
-//     if (newStartIndex < 0) {
-//       newStartIndex = 0;
-//     }
-
-//     int newEndIndex = textData.endIndex + endMod;
-
-//     if (newEndIndex > textData.fileContent.length - 1) {
-//       newEndIndex = textData.fileContent.length - 1;
-//     }
-//     textData.resultContent =
-//         textData.fileContent.substring(newStartIndex, newEndIndex);
-
-//     notifyListeners();
-//   }
-// }
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -414,7 +237,8 @@ class _RightPaneState extends State<RightPane> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      appState.readFile();
+                      //appState.readFile();
+                      appState.randomParagraph();
                       currentStartSliderValue = 0;
                       currentEndSliderValue = 0;
                     },
@@ -523,6 +347,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
                 child: Align(
               alignment: Alignment.topRight,
               child: IconButton(
+                  tooltip: "Close drawer",
                   onPressed: () {
                     _key.currentState!.closeDrawer();
                   },
