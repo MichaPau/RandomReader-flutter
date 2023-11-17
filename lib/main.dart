@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
+//import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 import 'package:path/path.dart' as p;
@@ -14,9 +14,9 @@ import 'package:window_manager/window_manager.dart';
 import 'state/app_state.dart';
 //import 'modules/test_widget.dart';
 
-void showLayoutGuidelines() {
-  debugPaintSizeEnabled = true;
-}
+// void showLayoutGuidelines() {
+//   debugPaintSizeEnabled = true;
+// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,7 @@ class MainApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Namer App',
+        title: 'Random Text Reader',
         theme: ThemeData(
           useMaterial3: true,
           radioTheme: RadioThemeData(
@@ -107,13 +107,11 @@ class LeftPane extends StatelessWidget {
                       visualDensity: VisualDensity(
                           horizontal: VisualDensity.minimumDensity,
                           vertical: VisualDensity.minimumDensity),
-
                       value: index,
-                      //groupValue: appState.selectedFileIndex,
                       groupValue: appState.userSettings.selectedIndex,
                       onChanged: (int? value) {
+                        //print("onChanged:$value");
                         appState.changeSelection(value);
-                        //appState.selectedFileIndex = value;
                       },
                     ),
                   ),
@@ -147,6 +145,10 @@ class _RightPaneState extends State<RightPane> {
     maxSliderValue = appState.userSettings.rangeModifier.toDouble();
 
     textFieldHeight = MediaQuery.of(context).size.height * 0.55;
+    var fileSelected = appState.fileNames.isNotEmpty
+        ? Uri.decodeFull(p.basenameWithoutExtension(
+            appState.fileNames[appState.userSettings.selectedIndex]))
+        : "No file selected";
 
     return FractionallySizedBox(
       widthFactor: 1,
@@ -245,6 +247,20 @@ class _RightPaneState extends State<RightPane> {
                     child: Text('Get Text'),
                   ),
                 ),
+                SizedBox(
+                  height: 5,
+                ),
+                Center(
+                  child: Column(children: [
+                    Text(
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        fileSelected),
+                    Text(
+                        "${appState.textData.startIndex}:${appState.textData.endIndex}"),
+                  ]),
+                )
                 // How to use Notifications from child widgets
                 // SizedBox(
                 //   height: 5,
@@ -306,9 +322,6 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
   Widget build(BuildContext context) {
     appState = context.watch<MyAppState>();
     var screenWidth = MediaQuery.of(context).size.width;
-    // openDrawer() {
-    //   Scaffold.of(context).openDrawer();
-    //}
 
     if (screenWidth > 600) {
       return Scaffold(
@@ -370,11 +383,7 @@ class LittleSettings extends StatefulWidget {
   State<LittleSettings> createState() => _LittleSettingsState();
 }
 
-// Define a corresponding State class.
-// This class holds the data related to the Form.
 class _LittleSettingsState extends State<LittleSettings> {
-  // Create a text controller and use it to retrieve the current value
-  // of the TextField.
   final inputCtr = TextEditingController();
   final rangeCtr = TextEditingController();
 
@@ -450,7 +459,6 @@ class _LittleSettingsState extends State<LittleSettings> {
             ),
             ElevatedButton(
                 onPressed: () {
-                  //print("ResultLength: ${inputCtr.text}");
                   appState.updateSettings(int.parse(inputCtr.text));
                   appState.setMaxRange(int.parse(rangeCtr.text));
                 },

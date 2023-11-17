@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:io';
-//import 'dart:convert';
 
-//import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:filepicker_windows/filepicker_windows.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -15,7 +14,6 @@ class TextData {
   String fileName = "empty";
   String fileContent = "empty";
   String resultContent = 'empty';
-  //int resultLength = 0;
   int startIndex = 0;
   int endIndex = 0;
 }
@@ -36,32 +34,18 @@ class MyAppState extends ChangeNotifier {
   //var bookDirPath = p.join(Directory.current.path, 'assets', 'books');
   var fileNames = <String>[];
 
-  //int selectedFileIndex = 0;
-  //int maxRange = 100;
-
   var textData = TextData();
   var userSettings = UserSettings();
 
   MyAppState() {
-    // _localPath.then((value) {
-    //   dir = Directory(value);
-    //   initFiles();
-    // });
-
     init();
 
     textData.fileName = 'empty';
     textData.fileContent = 'empty';
     textData.resultContent = 'empty';
-    //textData.resultLength = 250;
     textData.startIndex = 0;
     textData.endIndex = 0;
   }
-  // Future<String> get _localPath async {
-  //   final directory = Directory(bookDirPath);
-
-  //   return directory.path;
-  // }
 
   init() async {
     await loadSettings();
@@ -106,8 +90,6 @@ class MyAppState extends ChangeNotifier {
     final dir = Directory(userSettings.bookDirectory);
     fileNames = [];
     await for (var entity in dir.list(recursive: false, followLinks: false)) {
-      //print(p.canonicalize(entity.path));
-      //print(p.basenameWithoutExtension(entity.path));
       if (p.extension(entity.path) == '.txt') {
         fileNames.add(entity.path);
       }
@@ -119,7 +101,7 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  pickDir() async {
+  pickDir2() async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
         dialogTitle: "Select a folder.",
         initialDirectory: userSettings.bookDirectory);
@@ -130,56 +112,60 @@ class MyAppState extends ChangeNotifier {
       userSettings.bookDirectory = selectedDirectory.toString();
       userSettings.selectedIndex = 0;
       readFile();
-      //saveSettings();
       initFiles();
     }
   }
 
-  changeSelection(value) {
-    print("changeSelection: $value");
-    //selectedFileIndex = value;
+  pickDir() async {
+    final file = DirectoryPicker()..title = 'Select a directory';
+
+    final result = file.getDirectory();
+    if (result != null) {
+      print(result.path);
+      userSettings.bookDirectory = result.path;
+      userSettings.selectedIndex = 0;
+      readFile();
+      initFiles();
+    }
+  }
+
+  changeSelection(value) async {
     userSettings.selectedIndex = value;
-    readFile();
-    //saveSettings();
-    notifyListeners();
+    await readFile().then((value) {
+      print(fileNames[userSettings.selectedIndex]);
+      randomParagraph();
+      notifyListeners();
+    }).onError((error, stackTrace) {
+      print("error from changeSelection:$error");
+    });
   }
 
   debugInfo() async {
     print('button pressed!');
-    //print(dir);
-
-    // _localPath.then((value) {
-    //   print(value);
-    // });
   }
 
   setMaxRange(value) {
-    //maxRange = value;
     userSettings.rangeModifier = value;
-    //saveSettings();
     notifyListeners();
   }
 
   updateSettings(resultLength) {
-    //textData.resultLength = resultLength;
-
     userSettings.resultLength = resultLength;
-    //saveSettings();
     notifyListeners();
   }
 
-  readFile() {
-    //var file = fileNames[selectedFileIndex];
+  Future<void> readFile() async {
+    print("read file");
     var file = fileNames[userSettings.selectedIndex];
-    // print(file);
 
-    //try {
-    File(file).readAsString(encoding: utf8).then((String contents) {
+    await File(file).readAsString(encoding: utf8).then((String contents) {
       textData.fileContent = contents;
 
       if (textData.fileContent.length <= userSettings.resultLength) {
         userSettings.resultLength = contents.length - 1;
       }
+
+      return Future(() => null);
     }).onError((error, stackTrace) {
       print("onError: $error");
       print("try ascii");
@@ -189,16 +175,14 @@ class MyAppState extends ChangeNotifier {
         if (textData.fileContent.length <= userSettings.resultLength) {
           userSettings.resultLength = contents.length - 1;
         }
+        return Future(() => null);
       }).onError((error, stackTrace) {
         print("onError2: $error");
         textData.resultContent = error.toString();
         notifyListeners();
+        throw ("No valid encoding");
       });
     });
-    // } catch (e) {
-    //   print("catch: $e");
-    //   textData.resultContent = e.toString();
-    // }
   }
 
   randomParagraph() {
